@@ -3,7 +3,8 @@
 	Author: Seth Van Hee
 	Date: 12/2/2023
 	Purpose: relearning C++, thus implementing solutions poorly.
-			 This solution is overcomplicated and could be done without the hashmap
+			 Part 1: This solution is overcomplicated and could be done without the hashmap.
+			 Part 2: This solution is now even worse because of the hashmap as I need to evaluate a different result besides game possibility.
 
 */
 
@@ -13,20 +14,28 @@
 #include <unordered_map>
 #include <sstream>
 #include <string>
+#include <climits>
 using namespace std;
 
+struct Cubes {
+	int maxRed, maxGreen, maxBlue;
+};
+
 void createGameResult(unordered_map<int, bool>* gameMap, string line);
-bool evaluateGamePossibility(istringstream* lineStream);
+Cubes createCubes(istringstream* lineStream);
+bool isGamePossible(Cubes cubes);
 
 const int MAX_RED_CUBES = 12;
 const int MAX_GREEN_CUBES = 13;
 const int MAX_BLUE_CUBES = 14;
 
+int sumMinCubes = 0; // this is bad
+
 int main() {
 	ifstream inputFileStream;
 	inputFileStream.open("cubes.txt");
 	string line;
-	int sum = 0;
+	int sumGameID = 0;
 
 	unordered_map<int, bool> gameMap;
 
@@ -42,11 +51,12 @@ int main() {
 	unordered_map<int, bool>::iterator iter;
 	for (iter = gameMap.begin(); iter != gameMap.end(); iter++) {
 		if (iter->second) {
-			sum += iter->first;
+			sumGameID += iter->first;
 		}
 	}
 
-	cout << sum << endl;
+	cout << sumGameID << endl;
+	cout << sumMinCubes << endl;
 }
 
 void createGameResult(unordered_map<int, bool>* gameMap, string line) {
@@ -57,18 +67,18 @@ void createGameResult(unordered_map<int, bool>* gameMap, string line) {
 	getline(lineStream, temp, ':');
 
 	int gameID = stoi(temp);
-	cout << gameID << endl;
 	lineStream.ignore(1); // ignores space before data set
 
-	bool isGamePossible = evaluateGamePossibility(&lineStream);
+	Cubes cubes = createCubes(&lineStream);
 
-	(*gameMap)[gameID] = isGamePossible;
+	(*gameMap)[gameID] = isGamePossible(cubes);
 }
 
-bool evaluateGamePossibility(istringstream* lineStream) {
-	int redCubes = 0;
-	int greenCubes = 0;
-	int blueCubes = 0;
+Cubes createCubes(istringstream* lineStream) {
+	int maxRedCubes = 0;
+	int maxGreenCubes = 0;
+	int maxBlueCubes = 0;
+	Cubes newCubes;
 
 	string game, color, temp;
 	int value;
@@ -84,26 +94,43 @@ bool evaluateGamePossibility(istringstream* lineStream) {
 			gameLineStream.ignore(1); // ignores the space after the number
 			getline(gameLineStream, color, ',');
 
-			if (color == "red" && value > redCubes) {
-				redCubes = value;
+			if (color == "red") {
+				if (value > maxRedCubes) {
+					maxRedCubes = value;
+				}
 			}
-			else if (color == "green" && value > greenCubes) {
-				greenCubes = value;
+			else if (color == "green") {
+				if (value > maxGreenCubes) {
+					maxGreenCubes = value;
+				}
 			}
-			else if (color == "blue" && value > blueCubes) {
-				blueCubes = value;
+			else if (color == "blue") {
+				if (value > maxBlueCubes) {
+					maxBlueCubes = value;
+				}
 			}
 		}
-
+		
 	}
 
-	if (redCubes > MAX_RED_CUBES) {
+	newCubes.maxRed = maxRedCubes;
+	newCubes.maxGreen = maxGreenCubes;
+	newCubes.maxBlue = maxBlueCubes;
+
+	// this section gives the results for part2, still bad
+	sumMinCubes += maxRedCubes * maxGreenCubes * maxBlueCubes;
+
+	return newCubes;
+}
+
+bool isGamePossible(Cubes cubes) {
+	if (cubes.maxRed > MAX_RED_CUBES) {
 		return false;
 	}
-	if (greenCubes > MAX_GREEN_CUBES) {
+	if (cubes.maxGreen > MAX_GREEN_CUBES) {
 		return false;
 	}
-	if (blueCubes > MAX_BLUE_CUBES) {
+	if (cubes.maxBlue > MAX_BLUE_CUBES) {
 		return false;
 	}
 
